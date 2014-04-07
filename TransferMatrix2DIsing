@@ -1,0 +1,82 @@
+class TransferMatrix:
+    def __init__(self,N):
+        self.N = N
+        
+    # ALGORITHM TO PERMUTE WITHOUT REPETIONS 
+        import itertools
+        class unique_element:
+            def __init__(self,value,occurrences):
+                self.value = value
+                self.occurrences = occurrences
+        
+        def perm_unique(elements):
+            eset=set(elements)
+            listunique = [unique_element(i,elements.count(i)) for i in eset]
+            u=len(elements)
+            return perm_unique_helper(listunique,[0]*u,u-1)
+        
+        def perm_unique_helper(listunique,result_list,d):
+            if d < 0:
+                yield tuple(result_list)
+            else:
+                for i in listunique:
+                    if i.occurrences > 0:
+                        result_list[d]=i.value
+                        i.occurrences-=1
+                        for g in  perm_unique_helper(listunique,result_list,d-1):
+                            yield g
+                        i.occurrences+=1
+        lista = list() # defining a list
+        lista2 = list() # defining a list
+        for i in range(1,N+1):
+            lista.append(1) 
+        
+        #print lista
+        for j in range(1,N):
+            lista[N-j] = -1
+            a = list(perm_unique(lista))# making the permutations with the class (permutation without repetition)
+            lista2.append(a)
+            
+            
+        # removing extra brackets    
+        lista2 = list(itertools.chain(*lista2))  
+        
+        ################## just adding the missing states #################
+        add1 = []
+        add2 = []
+        
+        for i in range(1,N+1):
+            add1.append(1)
+            add2.append(-1)
+        
+        add1 = tuple(add1)
+        add2 = tuple(add2)
+        lista2.insert(0,tuple(add1))
+        lista2.insert(len(lista2),tuple(add2))
+        
+        tst = []
+        for i in range(0,len(lista2)):
+            tst.append(lista2[i])
+        
+        lista2 = list(itertools.chain(tst)) # just removing the extra unneccessery brackets
+        #################### 
+        
+        
+        
+        ######### working with the Transfer matrix
+        import numpy
+            
+        Nu = 2**(N)
+        p = numpy.zeros(Nu*Nu).reshape((Nu,Nu))
+            
+        for i in range(0,Nu):
+            for j in range(0,Nu):
+                sum1 = 0
+                for k in range(0,N):
+                    sum1 = sum1 + lista2[i][k]*lista2[j][k]
+                p[i][j] = -sum1
+                
+        
+        print p
+    
+T = TransferMatrix(2)
