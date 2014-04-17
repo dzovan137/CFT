@@ -1,6 +1,12 @@
 import numpy
 import itertools
 import scipy.sparse.linalg
+import math
+import heapq
+import numpy as np
+from irlb import *
+import time
+
 
 # ALGORITHM TO PERMUTE WITHOUT REPETIONS 
 class unique_element:
@@ -47,8 +53,7 @@ class TransferMatrix:
                        
         # removing extra brackets    
         lista2 = list(itertools.chain(*lista2))  
-        lista2.reverse()
-        
+        #lista2.reverse()
         ################## just adding the missing states #################
         add1 = []
         add2 = []
@@ -78,24 +83,90 @@ class TransferMatrix:
                 
                 sum1 = 0                                
                 
-                for k in range(0,self.N):
-                    sum1 = sum1 + (lista2[i][k]*lista2[j][k])
+                for k in range(0,self.N):                        
+                    sum1 = sum1 + self.J*(lista2[i][k]*lista2[j][k])
                 
-                for l in range(0,N-1):
+                for l in range(0,N):
+                    if l==N-1:
+                        k = 0
+                    else:
+                    	k = l + 1
+                    sum1 = sum1 + self.J*(lista2[i][l]*lista2[i][k])/2
+                    sum1 = sum1 + self.J*(lista2[j][l]*lista2[j][k])/2
+		
 
-                    sum1 = sum1 + (lista2[i][l]*lista2[i][l+1])/2.
-                    sum1 = sum1 + (lista2[j][l]*lista2[j][l+1])/2.
-                                    
-                p[i][j] = sum1*self.J
+
+                p[i][j] = np.float64(math.exp(sum1))
         return p
 
-    
-N = 2
+   
+"""
+N = 10
 J = 1
 T = TransferMatrix(N,J).compute(N,J)
-print T
+vals = numpy.linalg.eigvals(T)
+#print vals
+#print T
+#print "----- -------- ------ ----"
+T = T.reshape(2**(N),2**(N))
+#print T
+nu = 2
 
-# using http://docs.scipy.org/doc/scipy-0.13.0/reference/generated/scipy.sparse.linalg.eigsh.html
+tic1 = time.clock()
+S = numpy.linalg.eigvals(T)
+toc1 = time.clock()
 
-vals, vecs = scipy.sparse.linalg.eigsh(T, k=3)
-print vals
+tic2 = time.clock()
+X = irlb(T,nu)
+toc2 = time.clock()
+
+
+print 'vreme za prvi:',toc1-tic1,'s'
+print 'vreme za drugi:',toc2-tic2,'s'
+print(X[1])
+print(max(S))
+print max(X[1])
+"""
+
+nu=2
+for k in range(0,50):
+    print k
+
+
+    s = 0.2 + k*0.01
+        
+    c = ''.join([str('koji'),str(s),str('.txt')])
+    f = open(c,'w')
+            
+    print "N/","/Largest EigenValues","/Free Energy", "-----J = ",s
+    for i in range(0,13):
+        N = i+1
+        print 'gde sam:',N
+        J = s
+	tic1 = time.clock()
+        T = TransferMatrix(N,J).compute(N,J)
+	toc1 = time.clock()
+	print 'vreme za transfer matricu:',toc1-tic1,'s'
+        #vals, vecs = scipy.sparse.linalg.eigsh(T,k=2**(N)-1)
+	#vals = numpy.linalg.eigvals(T)
+	T = T.reshape(2**(N),2**(N))
+	tic2 = time.clock()
+	X = irlb(T,nu)
+	toc2 = time.clock()
+	print 'vreme za dijagonalizaciju:',toc2-tic2,'s'
+        print(X[1]) 
+	print 'samo jedna vrednost:',max(X[1])    
+        eigenvalues = np.float64(math.log(max(X[1]))/N)	
+        free_en = np.float64(-eigenvalues)
+        print N,eigenvalues,free_en
+        ww = ' '.join([str(N),str(free_en)])
+        f.write(str(ww))
+        f.write('\n')
+    f.close()
+
+########################################### 
+
+
+
+
+
