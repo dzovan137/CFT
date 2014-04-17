@@ -1,0 +1,50 @@
+# SCRIPT TO EXTRACT CENTRAL CHARGE AFTER FIT! 
+import os
+
+#Eiji code
+def fit_and_extract(filename):
+	pplot = open("gnuplot.dat", "w")
+	pplot.write("a=1\nb=1\nc=1\nf(x)=d-(c*pi)/(6*x*x)\nfit f(x) \""+filename+"\" via c,d") 
+
+	pplot.close()
+	os.system("gnuplot gnuplot.dat ; tail fit.log -n15 > fit2.log")
+    
+    # VERY IMPOTANT THING!!!!!!!!
+    # in the same directory where is the python file one needs to put the awk.awk file!!!!!!!!!!!!
+    # This also applies for Ipython notebook! (put awk.awk file where the notebook file is saved!)
+    
+	f=os.popen("awk -f awk.awk fit2.log")
+	for line in f:
+		a=float(line.split()[0])
+	return a
+
+# loop over all different exchange parameters J (in this example 0.2<J<0.6 )
+for k in range(0,30):
+    
+
+    exchange_parameter_value = 0.2 + k*0.04 #this will read from data files created with the main script
+    print "Exchange constant:",exchange_parameter_value
+    
+    
+    # open file to write
+    c = ''.join([str('big_daddy'),str(exchange_parameter_value),str('.txt')])
+    f = open(c,'w')
+    
+    
+    count = 0
+   # ---Now we read specific lines and extract the central charge for them ---
+    for i in range(3,11): #here the range needs to be adapted to the number of lattice sizes we calculated
+        first = i
+        second = i + 2
+        count = count + 1
+        
+        filee = "<(sed -n '"+str(first)+","+str(second)+"p' ""koji"+str(exchange_parameter_value)+".txt)"
+        c = fit_and_extract(filee) # central charge value
+        
+        ww = ' '.join([str(count),str(c)])
+        f.write(str(ww))
+        f.write('\n')
+        
+        print c
+        
+    f.close()
